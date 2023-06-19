@@ -372,7 +372,7 @@ function App() {
   }
 
   return (
-    <div className="App" onMouseMove={moveDrag} onMouseUp={endDrag}>
+    <div className="App" onMouseMove={moveDrag} onTouchMove={moveDrag} onMouseUp={endDrag}>
       <div className='sideCont'>
         <div className="dialogBox">
           <div id="bgBox">
