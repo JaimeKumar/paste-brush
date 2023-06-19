@@ -424,6 +424,58 @@ function App() {
         </div>
       </div>
 
+      <div id="middle">
+        <div id='mobButtonCol'>
+          <div className="button mob" id='clearButton' onClick={undo}>Undo</div>
+          <div className="button mob" id='clearButton' onClick={redo}>Redo</div>
+          <div className="button mob" id='clearButton' onClick={clearCanv}>Clear</div>
+          <div className="button mob" id='eraseButton' onClick={enableEraser}>Eraser</div>
+        </div>
+        <canvas id='canv' onMouseDown={startStroke} width={3000} height={3000}></canvas>
+      </div>
+      
+
+      <div className="sideCont" style={{right: 0}}>
+        <div className="dialogBox">
+          <h3>Image</h3>
+          <div className="row" style={{height: 'fit-content', width: '100%'}}>
+            <input id='imageUpload' type="file" accept="image/jpeg, image/png, image/jpg" multiple={true}></input>
+            <div id="imagePicker">
+              <div className='row'>
+                <div className="button arrow" onClick={() => imgChange(-1)}> &lt;</div>
+                <span>{imgPos + 1}&nbsp;/&nbsp;{img.length}</span>
+                <div className="button arrow" onClick={() => imgChange(1)}> &gt;</div>
+              </div>
+            </div>
+          </div>
+          <div id="imgPreview">
+            {img.map((img, i) => {
+              if (i !== imgPos) return;
+              return <img id='imgPreview' src={img.src} alt="" style={{transform: `rotate(${sliderPositions.rotate}grad) scale(${((sliderPositions.size*2)/$('.slider').width())})`}}/>
+            })}
+          </div>
+          <br />
+          <div id="brushSliders">
+            <p>Size</p>
+            <div className="slider">
+              <div className="slideProgress" style={{width: sliderPositions.size}}></div>
+              <div className="sliderHandle" id='size' style={{left: sliderPositions.size}} onMouseDown={startSlide}></div>          
+            </div>
+            <p>Rotation</p>
+            <div className="slider">
+              <div className="slideProgress" style={{width: sliderPositions.rotate}}></div>
+              <div className="sliderHandle" id='rotate' style={{left: sliderPositions.rotate}} onMouseDown={startSlide}></div>
+            </div>
+            <p>Density</p>
+            <div className="slider">
+              <div className="slideProgress" style={{width: sliderPositions.density}}></div>
+              <div className="sliderHandle" id='density' style={{left: sliderPositions.density}} onMouseDown={startSlide}></div>
+            </div>
+          </div>
+          <br />
+        </div>  
+      </div>
+
       <div id="mobileDialog" className='dialogBox'>
         <div className="tab">
           <div id='bgTab' className="tabOption selected" onClick={clickOption}>Background</div>
@@ -508,58 +560,6 @@ function App() {
             </div>
           </div>
         </div>
-      </div>
-
-      <div id="middle">
-        <div id='mobButtonCol'>
-          <div className="button mob" id='clearButton' onClick={undo}>Undo</div>
-          <div className="button mob" id='clearButton' onClick={redo}>Redo</div>
-          <div className="button mob" id='clearButton' onClick={clearCanv}>Clear</div>
-          <div className="button mob" id='eraseButton' onClick={enableEraser}>Eraser</div>
-        </div>
-        <canvas id='canv' onMouseDown={startStroke} width={3000} height={3000}></canvas>
-      </div>
-      
-
-      <div className="sideCont" style={{right: 0}}>
-        <div className="dialogBox">
-          <h3>Image</h3>
-          <div className="row" style={{height: 'fit-content', width: '100%'}}>
-            <input id='imageUpload' type="file" accept="image/jpeg, image/png, image/jpg" multiple={true}></input>
-            <div id="imagePicker">
-              <div className='row'>
-                <div className="button arrow" onClick={() => imgChange(-1)}> &lt;</div>
-                <span>{imgPos + 1}&nbsp;/&nbsp;{img.length}</span>
-                <div className="button arrow" onClick={() => imgChange(1)}> &gt;</div>
-              </div>
-            </div>
-          </div>
-          <div id="imgPreview">
-            {img.map((img, i) => {
-              if (i !== imgPos) return;
-              return <img id='imgPreview' src={img.src} alt="" style={{transform: `rotate(${sliderPositions.rotate}grad) scale(${((sliderPositions.size*2)/$('.slider').width())})`}}/>
-            })}
-          </div>
-          <br />
-          <div id="brushSliders">
-            <p>Size</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.size}}></div>
-              <div className="sliderHandle" id='size' style={{left: sliderPositions.size}} onMouseDown={startSlide}></div>          
-            </div>
-            <p>Rotation</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.rotate}}></div>
-              <div className="sliderHandle" id='rotate' style={{left: sliderPositions.rotate}} onMouseDown={startSlide}></div>
-            </div>
-            <p>Density</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.density}}></div>
-              <div className="sliderHandle" id='density' style={{left: sliderPositions.density}} onMouseDown={startSlide}></div>
-            </div>
-          </div>
-          <br />
-        </div>  
       </div>
     </div>
   );
