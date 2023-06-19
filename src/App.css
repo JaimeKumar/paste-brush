@@ -425,8 +425,8 @@ input {
     width: 45%;
   }
 
-  #brushSliders {
-    width: 45%;
+  .mobImg {
+    width: 95%;
   }
 
   .mobMod {

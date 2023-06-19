@@ -32,7 +32,7 @@ function App() {
   const [sliderPositions, setSliders] = useState({
     size: 50,
     rotate: 0,
-    density: 350,
+    density: 0,
     speed: [0, 0],
     amp: [0, 0]
   })
@@ -515,13 +515,6 @@ function App() {
               </div>
             </div>
           </div>
-          <div id="imgRow">
-          <div id="imgPreview">
-            {img.map((img, i) => {
-              if (i !== imgPos) return;
-              return <img id='imgPreview' src={img.src} alt="" style={{transform: `rotate(${sliderPositions.rotate}grad) scale(${((sliderPositions.size*2)/$('.slider').width())})`}}/>
-            })}
-          </div>
           <div id="brushSliders">
             <p>Size</p>
             <div className="slider">
@@ -538,7 +531,6 @@ function App() {
               <div className="slideProgress" style={{width: sliderPositions.density/2}}></div>
               <div className="sliderHandle" id='density' style={{left: sliderPositions.density/2}} onMouseDown={startSlide}></div>
             </div>
-          </div>
           </div>
         </div>
         <div className="mobMod hide">
