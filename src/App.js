@@ -431,7 +431,7 @@ function App() {
           <div className="button mob" id='clearButton' onClick={clearCanv}>Clear</div>
           <div className="button mob" id='eraseButton' onClick={enableEraser}>Eraser</div>
         </div>
-        <canvas id='canv' onMouseDown={startStroke} width={3000} height={3000}></canvas>
+        <canvas id='canv' onTouchStart={startStroke} onMouseDown={startStroke} width={3000} height={3000}></canvas>
       </div>
       
 
@@ -483,20 +483,20 @@ function App() {
           <div id='modTab' className="tabOption" onClick={clickOption}>Modulation</div>
         </div>
 
-        <div className="mobBg">
+        <div className="mobBg" onTouchEnd={endDrag}>
           <div id="gradColourPicker">
             <div className="colContainer">
               <div className="buttonCol">
                 <span>x0</span>
-                <div id='x0' className="number" onMouseDown={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.x0)}</div>
+                <div id='x0' className="number" onTouchStart={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.x0)}</div>
                 <span>y0</span>
-                <div id='y0' className="number" onMouseDown={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.y0)}</div>
+                <div id='y0' className="number" onTouchStart={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.y0)}</div>
                 <span>x1</span>
-                <div id='x1' className="number" onMouseDown={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.x1)}</div>
+                <div id='x1' className="number" onTouchStart={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.x1)}</div>
                 <span>y1</span>
-                <div id='y1' className="number" onMouseDown={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.y1)}</div>
+                <div id='y1' className="number" onTouchStart={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.y1)}</div>
                 <span>Stop</span>
-                <div id='gradPos' className="number" onMouseDown={startDrag}>{gradPos}</div>
+                <div id='gradPos' className="number" onTouchStart={startDrag}>{gradPos}</div>
                 <div className="button" onClick={addGradStop}>+</div>
               </div>
               <SketchPicker presetColors={[]} disableAlpha={true} color={bgGrad[gradPos]} width={'60%'} onChange={updatedColor => {updateCurrentBgNode(updatedColor.hex)}} />
