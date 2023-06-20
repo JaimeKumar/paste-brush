@@ -121,6 +121,7 @@ function App() {
   }
 
   function moveDrag(e) {
+    e.preventDefault();
     let x = e.clientX || e.touches[0].clientX;
     let y = e.clientY || e.touches[0].clientY;
 
@@ -267,9 +268,11 @@ function App() {
       y: e.clientY || e.touches[0].clientY
     }
 
-    
-    let w = (sliderPositions.size/slideLength) * img[imgPos].width + (wave[0] * 100);
-    let h = (sliderPositions.size/slideLength) * img[imgPos].height + (wave[0] * 100);
+    let aspect = img[imgPos].width/img[imgPos].height;
+    let w = ((2500 * sliderPositions.size)/slideLength) * aspect + (wave[0] * 100);
+    let h = ((2500 * sliderPositions.size)/slideLength) + (wave[0] * 100);
+
+    console.log(w, h);
     if (w < 1) w = 1;
     if (h < 1) w = 1;
     
