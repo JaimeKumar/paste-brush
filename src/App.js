@@ -115,6 +115,7 @@ function App() {
 
   function startDrag(e) {
     let y = e.clientY || e.touches[0].clientY;
+    e.preventDefault();
     setDragStart(y);
     setDragTarg(e.target.id);
     setDragInit(gradAngle[e.target.id])
