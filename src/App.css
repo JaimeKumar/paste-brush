@@ -113,6 +113,10 @@
   background-color: #f0f0f0;
 }
 
+.leftest {
+  border: none;
+}
+
 #blockColourPicker {
   width: 95%;
   margin-bottom: 10px;

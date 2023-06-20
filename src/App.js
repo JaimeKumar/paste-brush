@@ -1,6 +1,6 @@
 import './App.css';
 import $ from 'jquery';
-import { ChromePicker, SketchPicker } from 'react-color';
+import { SketchPicker } from 'react-color';
 import { useState, useEffect } from 'react';
 
 function App() {
@@ -37,6 +37,7 @@ function App() {
     amp: [0, 0]
   })
   const [slideGrabbed, setSlideGrabbed] = useState(null);
+  const [slideLength, setSlideLength] = useState(0);
   const [paintStart, setPaintStart] = useState(null);
   const [slideStart, setSlideStart] = useState(0);
   const [img, setImg] = useState([]);
@@ -61,22 +62,42 @@ function App() {
     })
 
     $('#imageUpload').on('change', () => {
-      let imgArr = [];
-      Array.from($('#imageUpload').prop('files')).forEach(img => {
-        var paintImg = new Image();
-        paintImg.onload = () => {
-          imgArr.push(paintImg)
-          setImg([...imgArr])
-          setImgPos(0);
-        }
-        paintImg.src = URL.createObjectURL(img) 
-      })
+      uploadImgs(Array.from($('#imageUpload').prop('files')));
+    })
+
+    $('#mobImageUpload').on('change', () => {
+      uploadImgs(Array.from($('#mobImageUpload').prop('files')));
     })
   }, [])
 
   useEffect(() => {
     update();
   }, [bgGrad, gradAngle, painted, canvState])
+
+  function uploadImgs(files) {
+    let imgArr = [];
+    let x = 0;
+
+    let doFile = file => {
+      var paintImg = new Image();
+      paintImg.onload = () => {
+        imgArr.push(paintImg)
+        x++;
+        imgLoop(files);
+      }
+      paintImg.src = URL.createObjectURL(file)
+    }
+
+    let imgLoop = files => {
+      if (x >= files.length) {
+        setImg([...imgArr])
+        setImgPos(0);
+        return;
+      }
+      doFile(files[x]);
+    }
+    imgLoop(files);
+  }
 
   function clickOption(e) {
     Array.from(e.target.parentElement.children).forEach(child => {
@@ -93,12 +114,15 @@ function App() {
   }
 
   function startDrag(e) {
-    setDragStart(e.clientY);
+    let y = e.clientY || e.touches[0].clientY;
+    setDragStart(y);
     setDragTarg(e.target.id);
     setDragInit(gradAngle[e.target.id])
   }
 
   function moveDrag(e) {
+    let x = e.clientX || e.touches[0].clientX;
+    let y = e.clientY || e.touches[0].clientY;
 
     if (eraseStroke) {
       collides(e);
@@ -106,24 +130,24 @@ function App() {
     }
 
     if (paintStart) {
-      let delta = Math.sqrt(Math.pow((e.clientX - paintStart.x), 2) + Math.pow((e.clientY - paintStart.y), 2))
-      let density = ($('.slider').width() - sliderPositions.density)/4;
+      let delta = Math.sqrt(Math.pow((x - paintStart.x), 2) + Math.pow((y - paintStart.y), 2))
+      let density = (slideLength - sliderPositions.density)/4;
       if (delta > density) {
         addPaste(e)
-        setPaintStart({x: e.clientX, y: e.clientY});
+        setPaintStart({x: x, y: y});
       }
       return;
     }
 
     if (slideGrabbed) {
-      let slideLength = $('.slider').width();
       let tempSlidePos = {...sliderPositions};
       let newVal;
       if (tempSlidePos[slideGrabbed].length > 1) {
-        newVal = tempSlidePos[slideGrabbed][modPos] + Math.round(e.clientX - slideStart);
+        newVal = tempSlidePos[slideGrabbed][modPos] + Math.round(x - slideStart);
       } else {
-        newVal = tempSlidePos[slideGrabbed] + Math.round(e.clientX - slideStart);
+        newVal = tempSlidePos[slideGrabbed] + Math.round(x - slideStart);
       }
+      // console.log(slideLength, newVal);
       if (newVal < 0) {
         newVal = 0;
       } else if (newVal > slideLength) {
@@ -135,9 +159,8 @@ function App() {
         tempSlidePos[slideGrabbed] = newVal;
       }
 
-
       setSliders(tempSlidePos);
-      setSlideStart(e.clientX);
+      setSlideStart(x);
       return;
     }
 
@@ -145,14 +168,14 @@ function App() {
 
     if (dragTarg === 'gradPos') {
       let tempPos = gradPos;
-      tempPos = gradPos + Math.round((dragStart - e.clientY)/50);
+      tempPos = gradPos + Math.round((dragStart - y)/50);
       if (tempPos < bgGrad.length && tempPos > -1 && tempPos !== gradPos) {
         setGradPos(tempPos);
-        setDragStart(e.clientY);
+        setDragStart(y);
       }
     } else {
       let currentAngle = {...gradAngle};
-      currentAngle[dragTarg] = dragInitial + Math.round((dragStart - e.clientY) * 2);
+      currentAngle[dragTarg] = dragInitial + Math.round((dragStart - y) * 2);
       if (currentAngle[dragTarg] > 6000) currentAngle[dragTarg] = 6000;
       if (currentAngle[dragTarg] < -6000) currentAngle[dragTarg] = -6000;
       setGradAngle(currentAngle);
@@ -175,12 +198,14 @@ function App() {
   }
 
   function startSlide(e) {
+    let x = e.clientX || e.touches[0].clientX;
+    setSlideLength(e.target.parentElement.offsetWidth)
     setSlideGrabbed(e.target.id);
-    setSlideStart(e.clientX);
+    setSlideStart(x);
   }
 
   function startStroke(e) {
-    if (img.length < 1 || e.buttons !== 1) return;
+    if (img.length < 1 || (e.buttons !== 1 && e.type !== 'touchstart')) return;
     if (erasing) {
       setEraseStroke(true)
       collides(e);
@@ -191,12 +216,16 @@ function App() {
 
   function collides(e) {
     var canvW = $('#canv').width();
-    let pos = {x: (e.clientX - $('#canv').offset().left) * (3000/canvW), y: (e.clientY - $('#canv').offset().top) * (3000/canvW)};
+    let pos = {
+      x: e.clientX || e.touches[0].clientX,
+      y: e.clientY || e.touches[0].clientY
+    }
+    let loc = {x: (pos.x - $('#canv').offset().left) * (3000/canvW), y: (pos.y - $('#canv').offset().top) * (3000/canvW)};
 
     for (var i = allPaints.length - 1; i > -1; i--) {
       let p = allPaints[i];
-      let xCollide = pos.x > p.x - (p.w/2) && pos.x < p.x + (p.w/2);
-      let yCollide = pos.y > p.y - (p.h/2) && pos.y < p.y + (p.h/2);
+      let xCollide = loc.x > p.x - (p.w/2) && loc.x < p.x + (p.w/2);
+      let yCollide = loc.y > p.y - (p.h/2) && loc.y < p.y + (p.h/2);
       if (xCollide && yCollide) {
         allPaints.splice(i, 1)
         break;
@@ -206,7 +235,6 @@ function App() {
 
   function drawBackground() {
     if (!canvas) return;
-    console.log(bgGrad.length);
     if (bgGrad.length > 1) {
       var grd = canvas.c.createLinearGradient(gradAngle.x0, gradAngle.y0, gradAngle.x1, gradAngle.y1);
       for (var i = 0; i < bgGrad.length; i++) {
@@ -232,21 +260,27 @@ function App() {
 
   function addPaste(e) {
     var canvW = $('#canv').width();
+
     let tempPainted = [...painted];
     let tempPaints = [...allPaints];
+    let pos = {
+      x: e.clientX || e.touches[0].clientX,
+      y: e.clientY || e.touches[0].clientY
+    }
 
+    
     let w = (sliderPositions.size/15) * img[imgPos].width + (wave[0] * 100);
     let h = (sliderPositions.size/15) * img[imgPos].height + (wave[0] * 100);
     if (w < 1) w = 1;
     if (h < 1) w = 1;
-
+    
     let paste = {
       img: img[imgPos],
-      x: (e.clientX - $('#canv').offset().left) * (3000/canvW),
-      y: (e.clientY - $('#canv').offset().top) * (3000/canvW),
+      x: (pos.x - $('#canv').offset().left) * (3000/canvW),
+      y: (pos.y - $('#canv').offset().top) * (3000/canvW),
       w: w,
       h: h,
-      r: (((sliderPositions.rotate/$('.slider').width()) + (wave[1]/4)) * 2) * Math.PI
+      r: (((sliderPositions.rotate/slideLength) + (wave[1]/4)) * 2) * Math.PI
     }
     tempPainted.push(paste)
     tempPaints.push(paste)
@@ -254,8 +288,8 @@ function App() {
     setAllPaints([...tempPaints]);
     
     setPaintStart({
-      x: (e.clientX - $('#canv').offset().left) * (3000/canvW),
-      y: (e.clientY - $('#canv').offset().top) * (3000/canvW)
+      x: (pos.x- $('#canv').offset().left) * (3000/canvW),
+      y: (pos.y - $('#canv').offset().top) * (3000/canvW)
     });
     tickWave();
   }
@@ -342,13 +376,11 @@ function App() {
   function tickWave() {
     let temp = [...wave];
     let time = [...wavePos];
-    let slideW = $('.slider').width();
 
     for (var i = 0; i < 2; i++) {
-      temp[i] += (sliderPositions.amp[i]/slideW) * Math.sin(time[i])
-      time[i] += (sliderPositions.speed[i])/slideW;
+      temp[i] += (sliderPositions.amp[i]/slideLength) * Math.sin(time[i])
+      time[i] += (sliderPositions.speed[i])/slideLength;
     }
-
     setWavePos(time);
     setWave(temp)
   }
@@ -372,7 +404,7 @@ function App() {
   }
 
   return (
-    <div className="App" onMouseMove={moveDrag} onTouchMove={moveDrag} onMouseUp={endDrag}>
+    <div className="App" onMouseMove={moveDrag} onTouchMove={moveDrag} onMouseUp={endDrag} onTouchEnd={endDrag}>
       <div className='sideCont'>
         <div className="dialogBox">
           <div id="bgBox">
@@ -416,9 +448,9 @@ function App() {
           </div>
 
           <div className='buttonRow'>
-            <div className="button norm" id='clearButton' onClick={undo}>Undo</div>
-            <div className="button norm" id='clearButton' onClick={redo}>Redo</div>
-            <div className="button norm" id='clearButton' onClick={clearCanv}>Clear</div>
+            <div className="button norm" onClick={undo}>Undo</div>
+            <div className="button norm" onClick={redo}>Redo</div>
+            <div className="button norm" onClick={clearCanv}>Clear</div>
             <div className="button norm" id='eraseButton' onClick={enableEraser}>Eraser</div>
           </div>
         </div>
@@ -426,10 +458,10 @@ function App() {
 
       <div id="middle">
         <div id='mobButtonCol'>
-          <div className="button mob" id='clearButton' onClick={undo}>Undo</div>
-          <div className="button mob" id='clearButton' onClick={redo}>Redo</div>
-          <div className="button mob" id='clearButton' onClick={clearCanv}>Clear</div>
-          <div className="button mob" id='eraseButton' onClick={enableEraser}>Eraser</div>
+          <div className="button mob" onClick={undo}>Undo</div>
+          <div className="button mob" onClick={redo}>Redo</div>
+          <div className="button mob" onClick={clearCanv}>Clear</div>
+          <div className="button mob" id='mobEraseButton' onClick={enableEraser}>Eraser</div>
         </div>
         <canvas id='canv' onTouchStart={startStroke} onMouseDown={startStroke} width={3000} height={3000}></canvas>
       </div>
@@ -478,12 +510,12 @@ function App() {
 
       <div id="mobileDialog" className='dialogBox'>
         <div className="tab">
-          <div id='bgTab' className="tabOption selected" onClick={clickOption}>Background</div>
+          <div id='bgTab' className="tabOption leftest selected" onClick={clickOption}>Background</div>
           <div id='imgTab' className="tabOption" onClick={clickOption}>Image</div>
           <div id='modTab' className="tabOption" onClick={clickOption}>Modulation</div>
         </div>
 
-        <div className="mobBg" onTouchEnd={endDrag}>
+        <div className="mobBg">
           <div id="gradColourPicker">
             <div className="colContainer">
               <div className="buttonCol">
@@ -506,7 +538,7 @@ function App() {
 
         <div className="mobImg hide">
           <div className="row" style={{height: 'fit-content', width: '100%'}}>
-            <input id='imageUpload' type="file" accept="image/jpeg, image/png, image/jpg" multiple={true}></input>
+            <input id='mobImageUpload' type="file" accept="image/jpeg, image/png, image/jpg" multiple={true}></input>
             <div id="imagePicker">
               <div className='row'>
                 <div className="button arrow" onClick={() => imgChange(-1)}> &lt;</div>
@@ -518,18 +550,18 @@ function App() {
           <div id="brushSliders">
             <p>Size</p>
             <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.size/2}}></div>
-              <div className="sliderHandle" id='size' style={{left: sliderPositions.size/2}} onMouseDown={startSlide}></div>          
+              <div className="slideProgress" style={{width: sliderPositions.size}}></div>
+              <div className="sliderHandle" id='size' style={{left: sliderPositions.size}} onTouchStart={startSlide}></div>          
             </div>
             <p>Rotation</p>
             <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.rotate/2}}></div>
-              <div className="sliderHandle" id='rotate' style={{left: sliderPositions.rotate/2}} onMouseDown={startSlide}></div>
+              <div className="slideProgress" style={{width: sliderPositions.rotate}}></div>
+              <div className="sliderHandle" id='rotate' style={{left: sliderPositions.rotate}} onTouchStart={startSlide}></div>
             </div>
             <p>Density</p>
             <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.density/2}}></div>
-              <div className="sliderHandle" id='density' style={{left: sliderPositions.density/2}} onMouseDown={startSlide}></div>
+              <div className="slideProgress" style={{width: sliderPositions.density}}></div>
+              <div className="sliderHandle" id='density' style={{left: sliderPositions.density}} onTouchStart={startSlide}></div>
             </div>
           </div>
         </div>
@@ -543,12 +575,12 @@ function App() {
             <p>Speed</p>
             <div className="slider">
               <div className="slideProgress" style={{width: sliderPositions.speed[modPos]}} ></div>
-              <div className="sliderHandle" id='speed' style={{left: sliderPositions.speed[modPos]}} onMouseDown={startSlide}></div>
+              <div className="sliderHandle" id='speed' style={{left: sliderPositions.speed[modPos]}} onTouchStart={startSlide}></div>
             </div>
             <p>Amplitude</p>
             <div className="slider">
               <div className="slideProgress" style={{width: sliderPositions.amp[modPos]}} ></div>
-              <div className="sliderHandle" id='amp' style={{left: sliderPositions.amp[modPos]}} onMouseDown={startSlide}></div>
+              <div className="sliderHandle" id='amp' style={{left: sliderPositions.amp[modPos]}} onTouchStart={startSlide}></div>
             </div>
           </div>
         </div>
