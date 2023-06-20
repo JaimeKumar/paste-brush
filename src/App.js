@@ -147,7 +147,6 @@ function App() {
       } else {
         newVal = tempSlidePos[slideGrabbed] + Math.round(x - slideStart);
       }
-      // console.log(slideLength, newVal);
       if (newVal < 0) {
         newVal = 0;
       } else if (newVal > slideLength) {
@@ -269,8 +268,8 @@ function App() {
     }
 
     
-    let w = (sliderPositions.size/15) * img[imgPos].width + (wave[0] * 100);
-    let h = (sliderPositions.size/15) * img[imgPos].height + (wave[0] * 100);
+    let w = (sliderPositions.size/slideLength) * img[imgPos].width + (wave[0] * 100);
+    let h = (sliderPositions.size/slideLength) * img[imgPos].height + (wave[0] * 100);
     if (w < 1) w = 1;
     if (h < 1) w = 1;
     
