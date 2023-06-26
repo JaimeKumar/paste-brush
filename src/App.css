@@ -10,56 +10,56 @@
 
 .App {
   width: 100%;
-  height: 100%;
-  height: 100svh;
+  min-height: 100%;
+  min-height: 100svh;
+  height: fit-content;
   position: relative;
-  overflow-y: hidden;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  column-gap: 50px;
+  row-gap: 30px;
 }
 
 #canv {
   height: 95vmin;
   aspect-ratio: 1;
   box-shadow: 0 0 10px #ccc;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+}
+
+#waveCanv {
+  margin-top: 25px;
+  width: 100%;
+  height: clamp(150px, 10vmin, 300px);
+  border: 2px solid #ccc;
+  border-radius: 10px;
 }
 
 .cutMode {
   cursor: cell;
 }
 
-.sideCont {
-  height: 95%;
-  width: calc(100vmax / 3.8);
+#dialogs {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.dialogBox {
-  height: 100%;
-  padding: 15px;
-  box-shadow: 0 0 10px #ccc;
+  justify-content: flex-start;
+  height: 95vmin;
   border-radius: 10px;
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
+  box-shadow: 0 0 10px #ccc;
+  position: relative;
+  overflow: hidden;
+  padding: 65px clamp(10px, 2vw, 20px);
+  width: min(60vmin, 30vmax)
 }
 
-.dialogBox h3 {
-  font-weight: 900;
-  font-family: 'Lexend';
-  margin: 1vmin 0 2vmin 0;
-  width: 95%;
-  user-select: none;
+#mainButtons {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  width: calc(100% - 20px);
+  padding: 10px 20px;
+  transform: translateX(-50%);
 }
 
 .selectBox {
@@ -93,13 +93,12 @@
   position: absolute;
   top: 0;
   left: 0;
-  height: 30px;
+  height: 40px;
   width: 100%;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  /* border-bottom: 1px solid #ccc; */
 }
 
 .tabOption {
@@ -112,47 +111,61 @@
   border-left: 1px solid #ccc;
   font-size: 0.8rem;
   background-color: #f0f0f0;
+  cursor: pointer;
 }
 
 .leftest {
   border: none;
 }
 
-#blockColourPicker {
-  width: 95%;
-  margin-bottom: 10px;
-}
-
-.blockPicker {
-  /* position: absolute; */
-  /* left: 10px; */
-  /* top: 10px; */
-  width: 100%;
-  height: 100%;
-}
-
-#gradColourPicker {
-  width: 95%;
-  margin-bottom: 10px;
-}
-
-.colContainer {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-.buttonCol {
+.dialogPage {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 14%;
+  justify-content: space-around;
+  row-gap: 30px;
   height: 100%;
+  padding-bottom: 25px;
+}
+
+#modBox {
+  height: fit-content;
+  text-align: left;
+  padding-top: 10px;
+}
+
+#modBox p {
+  width: 95%;
+}
+
+#modBox input[type=range] {
+  width: 100%;
+}
+
+.rowBox {
+  column-gap: min(50px, 5.5vw);
+  display: flex;
+  flex-direction: row;
+  width: calc(100% - 20px);
+}
+
+.colBox {
+  display: flex;
+  flex-direction: column;
+  row-gap: 15px;
+}
+
+
+.colBox b {
+  margin-bottom: 10px;
+  width: 100%;
+  white-space: nowrap;
+  font-size: clamp(15px, 1.5vw, 20px);
 }
 
 span {
   user-select: none;
-  font-size: 0.8rem;
+  font-size: clamp(0.8rem, 0.8vw, 1.1rem);
 }
 
 .button {
@@ -160,19 +173,16 @@ span {
   padding: 0;
   box-shadow: 0 0 10px #bbb;
   border-radius: 6px;
+  /* width: clamp(100px, 10vw, 140px); */
   width: 100%;
   text-align: center;
   font-size: 1.3rem;
   user-select: none;
-  height: 40px;
-  line-height: 40px;
+  height: clamp(30px, 2vh, 40px);
+  line-height: clamp(30px, 2vh, 40px);
   transition: 0.1s;
-}
-
-.norm {
-  font-size: 0.9rem;
-  margin-top: 10px;
-  width: 20%;
+  padding: 0 clamp(2px, 0.5vw, 10px);
+  font-size: clamp(12.5px, 0.7vw, 15px);
 }
 
 .row {
@@ -180,6 +190,15 @@ span {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  column-gap: min(10px, 2vw);
+  width: 100%;
+  /* flex-wrap: wrap; */
+}
+
+input[type="number"] {
+  height: 20px;
+  width: 60px;
+  padding: 0 3px
 }
 
 .selected {
@@ -195,78 +214,10 @@ span {
   height: 25px;
   line-height: 25px;
   font-size: 1rem;
+  padding: 0;
 }
 
-.number {
-  cursor: n-resize;
-  padding: 1px;
-  box-shadow: 0 0 10px #bbb;
-  border-radius: 6px;
-  width: 100%;
-  text-align: center;
-  margin: 8px 0 18px 0;
-  user-select: none;
-  font-size: 0.8rem;
-}
-
-.dialogBox p {
-  width: 95%;
-  user-select: none;
-  margin: 15px 0 15px 0;
-  font-size: 0.9rem;
-}
-
-.slider {
-  background-color: #eee;
-  border-radius: 5px;
-  width: 95%;
-  height: 6px;
-  margin: 3px 0 10px 0;
-  position: relative;
-  -webkit-box-shadow: inset 2px 2px 5px #aaa;
-     -moz-box-shadow: inset 2px 2px 5px #aaa;
-          box-shadow: inset 2px 2px 5px #aaa
-}
-
-.slideProgress {
-  background-color: #6f8ec4;
-  border-radius: 5px;
-  position: absolute;
-  left: 0;
-  height: 100%;
-}
-
-.sliderHandle {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background-color: #eee;
-  box-shadow: inset 2px -2px 4px #aaa;
-  top: -6px;
-  left: 0;
-  transform: translateX(-6px);
-  cursor: pointer;
-}
-
-.buttonRow {
-  display: flex;
-  flex-direction: row;
-  width: 95%;
-  height: fit-content;
-  justify-content: space-between;
-  overflow: visible;
-  margin: 10px 0 10px 0;
-}
-
-#modulationBox {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  padding-left: 2.5%;
-}
-
-input {
+input[type="file"] {
   width: 65%;
   padding: 2.5%;
   height: 50px;
@@ -291,7 +242,7 @@ input {
 #imgPreview {
   background-color: white;
   box-shadow: 0 0 10px #bbb;
-  width: 95%;
+  height: min(25vmax, 40vmin);
   aspect-ratio: 1;
   margin: 10px 0 10px 0;
   display: flex;
@@ -307,139 +258,35 @@ input {
   aspect-ratio: initial;
 }
 
-#mobileDialog {
-  display: none;
-  margin: 3vmin 0 0 0;
-  width: 100%;
-  padding: 0%;
-  padding-top: 40px;
-  position: relative;
-  overflow: hidden;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.mobBg {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-direction: column;
-  position: relative;
-}
-
-#bgBox, #brushSliders {
-  width: 100%;
+.sliders {
+  width: 95%;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  row-gap: 10px;
 }
 
-#middle {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-}
-
-#mobButtonCol {
-  display: none;
-  flex-direction: column;
-  width: 21%;
-  height: fit-content;
-  justify-content: space-between;
-  overflow: visible;
-  margin: 0 0 10px 0;
-}
-
-.mob {
-  width: 90%;
-  font-size: 0.8rem;
-  margin: 0%;
-  margin-bottom: 10px;
-}
-
-.sketch-picker {
-  height: 100%;
-}
-
-#imgRow {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-  justify-content: space-between;
-  padding: 0 15px 0 15px;
+.sliders p {
+  font-size: clamp(0.8rem, 0.8vw, 1.1rem);
 }
 
 .hide {
   display: none;
 }
 
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 1320px) {
   .App {
-    display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    padding: 2.5vmin;
+    padding: 15px 0;
   }
 
-  #canv {
-    position: unset;
-    transform: none;
-    height: 75vw;
+  #dialogs {
+    width: min(95vmin, 55vmax);
+    /* min-width: 380px; */
+    /* min-height: 600px; */
+    height: fit-content
   }
 
-  .sideCont {
-    display: none;
-  }
-
-  #mobileDialog {
-    display: flex;
-  }
-  
-  .selectBox {
-    height: 25px;
-  }
-
-  .selectOption {
-    font-size: 0.8rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #blockColourPicker {
-    height: 100%;
-  }
-
-  #mobButtonCol {
-    display: flex;
-  }
-  
-  .buttonCol span {
-    margin: 0;
-  }
-
-  .number {
-    margin-bottom: 6px;
-  }
-
-  #imgPreview {
-    width: 45%;
-  }
-
-  .mobImg {
-    width: 95%;
-  }
-
-  .mobMod {
-    width: 100%;
-    padding: 0 15px 0 15px;
-  }
-
-  #modulationBox {
+  #mainButtons {
     width: 100%;
   }
 }

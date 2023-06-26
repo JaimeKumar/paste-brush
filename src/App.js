@@ -1,51 +1,46 @@
 import './App.css';
 import $ from 'jquery';
 import { SketchPicker } from 'react-color';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 function App() {
 
   const selectOptions = {
     bgTab: () => {
-      $('.mobBg').removeClass('hide')
-      $('.mobImg').addClass('hide')
-      $('.mobMod').addClass('hide')
+      $('#bgBox').removeClass('hide')
+      $('#imgBox').addClass('hide')
+      $('#modBox').addClass('hide')
     },
     imgTab: () => {
-      $('.mobBg').addClass('hide')
-      $('.mobImg').removeClass('hide')
-      $('.mobMod').addClass('hide')
+      $('#bgBox').addClass('hide')
+      $('#imgBox').removeClass('hide')
+      $('#modBox').addClass('hide')
       
     },
     modTab: () => {
-      $('.mobBg').addClass('hide')
-      $('.mobImg').addClass('hide')
-      $('.mobMod').removeClass('hide')
+      $('#bgBox').addClass('hide')
+      $('#imgBox').addClass('hide')
+      $('#modBox').removeClass('hide')
     }
   }
   const [bgGrad, setGradBG] = useState(['#fff']);
   const [gradPos, setGradPos] = useState(0);
   const [gradAngle, setGradAngle] = useState({x0: 0, y0: 0, x1: 3000, y1: 3000})
-  const [dragStart, setDragStart] = useState(0);
-  const [dragTarg, setDragTarg] = useState(null);
-  const [dragInitial, setDragInit] = useState(0);
   const [sliderPositions, setSliders] = useState({
-    size: 50,
-    rotate: 0,
-    density: 0,
+    size: [50, 50],
+    rotate: [0, 0],
+    density: [0, 0],
     speed: [0, 0],
     amp: [0, 0]
   })
-  const [slideGrabbed, setSlideGrabbed] = useState(null);
-  const [slideLength, setSlideLength] = useState(0);
   const [paintStart, setPaintStart] = useState(null);
-  const [slideStart, setSlideStart] = useState(0);
   const [img, setImg] = useState([]);
   const [imgPos, setImgPos] = useState(-1);
   const [painted, setPainted] = useState([]);
   const [allPaints, setAllPaints] = useState([]);
   const [canvState, setCanvState] = useState(null);
   const [canvas, setCanvas] = useState(null);
+  const [waveGraph, setWaveGraph] = useState(null);
   const [canvUrl, setCanvUrl] = useState(null);
   const [erasing, setErasing] = useState(false);
   const [eraseStroke, setEraseStroke] = useState(false);
@@ -56,6 +51,11 @@ function App() {
 
 
   useEffect(() => {
+    setWaveGraph({
+      canv: $('#waveCanv')[0],
+      c: $('#waveCanv')[0].getContext('2d')
+    })
+
     setCanvas({
       canv: $('#canv')[0],
       c: $('#canv')[0].getContext('2d')
@@ -73,6 +73,10 @@ function App() {
   useEffect(() => {
     update();
   }, [bgGrad, gradAngle, painted, canvState])
+
+  useEffect(() => {
+    drawWave();
+  }, [sliderPositions, modPos])
 
   function uploadImgs(files) {
     let imgArr = [];
@@ -99,6 +103,12 @@ function App() {
     imgLoop(files);
   }
 
+  function changeGradpoint(e) {
+    let temp = {...gradAngle};
+    temp[e.target.id] = e.target.value;
+    setGradAngle(temp);
+  }
+
   function clickOption(e) {
     Array.from(e.target.parentElement.children).forEach(child => {
       $(`#${child.id}`).removeClass('selected');
@@ -113,16 +123,14 @@ function App() {
     setGradBG(currentGrad);
   }
 
-  function startDrag(e) {
-    let y = e.clientY || e.touches[0].clientY;
-    e.preventDefault();
-    setDragStart(y);
-    setDragTarg(e.target.id);
-    setDragInit(gradAngle[e.target.id])
+  function sliderChanged(e) {
+    let temp = {...sliderPositions};
+    temp[e.target.name][modPos] = e.target.value;
+    setSliders(temp)
   }
 
   function moveDrag(e) {
-    e.preventDefault();
+    if (!eraseStroke && !paintStart) return;
     let x = e.clientX || e.touches[0].clientX;
     let y = e.clientY || e.touches[0].clientY;
 
@@ -133,59 +141,16 @@ function App() {
 
     if (paintStart) {
       let delta = Math.sqrt(Math.pow((x - paintStart.x), 2) + Math.pow((y - paintStart.y), 2))
-      let density = (slideLength - sliderPositions.density)/4;
+      let density = (100 -sliderPositions.density[modPos])/4;
       if (delta > density) {
         addPaste(e)
         setPaintStart({x: x, y: y});
       }
       return;
     }
-
-    if (slideGrabbed) {
-      let tempSlidePos = {...sliderPositions};
-      let newVal;
-      if (tempSlidePos[slideGrabbed].length > 1) {
-        newVal = tempSlidePos[slideGrabbed][modPos] + Math.round(x - slideStart);
-      } else {
-        newVal = tempSlidePos[slideGrabbed] + Math.round(x - slideStart);
-      }
-      if (newVal < 0) {
-        newVal = 0;
-      } else if (newVal > slideLength) {
-        newVal = slideLength;
-      }
-      if (tempSlidePos[slideGrabbed].length > 1) {
-        tempSlidePos[slideGrabbed][modPos] = newVal;
-      } else {
-        tempSlidePos[slideGrabbed] = newVal;
-      }
-
-      setSliders(tempSlidePos);
-      setSlideStart(x);
-      return;
-    }
-
-    if (!dragTarg) return;
-
-    if (dragTarg === 'gradPos') {
-      let tempPos = gradPos;
-      tempPos = gradPos + Math.round((dragStart - y)/50);
-      if (tempPos < bgGrad.length && tempPos > -1 && tempPos !== gradPos) {
-        setGradPos(tempPos);
-        setDragStart(y);
-      }
-    } else {
-      let currentAngle = {...gradAngle};
-      currentAngle[dragTarg] = dragInitial + Math.round((dragStart - y) * 2);
-      if (currentAngle[dragTarg] > 6000) currentAngle[dragTarg] = 6000;
-      if (currentAngle[dragTarg] < -6000) currentAngle[dragTarg] = -6000;
-      setGradAngle(currentAngle);
-    }
   }
   
   function endDrag() {
-    setDragTarg(null);
-    setSlideGrabbed(null);
     setPaintStart(null);
     finishStroke();
     setEraseStroke(false)
@@ -196,13 +161,6 @@ function App() {
     tempGrad.push('#000');
     setGradBG(tempGrad);
     setGradPos(tempGrad.length - 1)
-  }
-
-  function startSlide(e) {
-    let x = e.clientX || e.touches[0].clientX;
-    setSlideLength(e.target.parentElement.offsetWidth)
-    setSlideGrabbed(e.target.id);
-    setSlideStart(x);
   }
 
   function startStroke(e) {
@@ -270,10 +228,9 @@ function App() {
     }
 
     let aspect = img[imgPos].width/img[imgPos].height;
-    let w = ((2500 * sliderPositions.size)/slideLength) * aspect + (wave[0] * 100);
-    let h = ((2500 * sliderPositions.size)/slideLength) + (wave[0] * 100);
-
-    console.log(w, h);
+    let w = ((sliderPositions.size[modPos]) * 25 *aspect) + (wave[0] * 100);
+    let h = (sliderPositions.size[modPos] * 25) + (+wave[0] * 100);
+    
     if (w < 1) w = 1;
     if (h < 1) w = 1;
     
@@ -283,7 +240,7 @@ function App() {
       y: (pos.y - $('#canv').offset().top) * (3000/canvW),
       w: w,
       h: h,
-      r: (((sliderPositions.rotate/slideLength) + (wave[1]/4)) * 2) * Math.PI
+      r: (((sliderPositions.rotate[modPos]/100) + (wave[1]/4)) * 2) * Math.PI
     }
     tempPainted.push(paste)
     tempPaints.push(paste)
@@ -315,7 +272,8 @@ function App() {
     } else {
       drawBackground();
     }
-    drawForeground(); 
+    drawForeground();
+    drawWave();
   }
 
   function finishStroke() {
@@ -339,20 +297,6 @@ function App() {
     setAllPaints([]);
   }
 
-  function changeNumber(e) {
-    e.target.contentEditable = true;
-    e.target.focus();
-  }
-
-  function finishChange(e) {
-    let tempGrad = {...gradAngle}
-    tempGrad[e.target.id] = e.target.innerHTML;
-    if (tempGrad[e.target.id] > 6000) tempGrad[e.target.id] = 6000;
-    if (tempGrad[e.target.id] < -6000) tempGrad[e.target.id] = -6000;
-    e.target.innerHTML = tempGrad[e.target.id];
-    setGradAngle(tempGrad)
-  }
-
   function enableEraser(e) {
     $('#canv').toggleClass('cutMode');
     $(`#${e.target.id}`).toggleClass('selected');
@@ -373,7 +317,6 @@ function App() {
     setModPos(p => ((p * -1) + 1))
     $('#modsize').toggleClass('selected')
     $('#modrotate').toggleClass('selected')
-    
   }
 
   function tickWave() {
@@ -381,11 +324,33 @@ function App() {
     let time = [...wavePos];
 
     for (var i = 0; i < 2; i++) {
-      temp[i] += (sliderPositions.amp[i]/slideLength) * Math.sin(time[i])
-      time[i] += (sliderPositions.speed[i])/slideLength;
+      temp[i] += (sliderPositions.amp[i]/100) * Math.sin(time[i])
+      time[i] += sliderPositions.speed[i]/500;
     }
     setWavePos(time);
     setWave(temp)
+  }
+
+  function drawWave() {
+    if (!waveGraph) return;
+    let w = waveGraph.canv.width;
+    let h = waveGraph.canv.height;
+    waveGraph.c.fillStyle = '#fff';
+    waveGraph.c.fillRect(0, 0, w, h)
+    waveGraph.c.strokeStyle = '#777';
+    waveGraph.c.beginPath();
+    waveGraph.c.moveTo(0, h/2);
+    waveGraph.c.lineTo(w, h/2);
+    waveGraph.c.stroke();
+
+    waveGraph.c.strokeStyle = '#113377';
+    waveGraph.c.beginPath();
+    for (var x = 0; x < 360; x++) {
+      let i = x;
+      waveGraph.c.moveTo((i/(3.6 * sliderPositions.speed[modPos])) * (w), (h/2) + (Math.sin(i) * 0.6 * sliderPositions.amp[modPos]));
+      waveGraph.c.lineTo(((i+1)/(3.6 * sliderPositions.speed[modPos])) * (w), (h/2) + (Math.sin(i+1) * 0.6 * sliderPositions.amp[modPos]));
+    }
+    waveGraph.c.stroke();
   }
 
   function undo() {
@@ -408,72 +373,59 @@ function App() {
 
   return (
     <div className="App" onMouseMove={moveDrag} onTouchMove={moveDrag} onMouseUp={endDrag} onTouchEnd={endDrag}>
-      <div className='sideCont'>
-        <div className="dialogBox">
-          <div id="bgBox">
-          <h3>Background</h3>
-          <div id="gradColourPicker">
-            <div className="colContainer">
-              <div className="buttonCol">
-                <span>x0</span>
-                <div id='x0' className="number" onMouseDown={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.x0)}</div>
-                <span>y0</span>
-                <div id='y0' className="number" onMouseDown={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.y0)}</div>
-                <span>x1</span>
-                <div id='x1' className="number" onMouseDown={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.x1)}</div>
-                <span>y1</span>
-                <div id='y1' className="number" onMouseDown={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.y1)}</div>
-                <span>Stop</span>
-                <div id='gradPos' className="number" onMouseDown={startDrag}>{gradPos}</div>
-                <div className="button" onClick={addGradStop}>+</div>
-              </div>
-              <SketchPicker presetColors={[]} disableAlpha={true} color={bgGrad[gradPos]} width={'75%'} onChange={updatedColor => {updateCurrentBgNode(updatedColor.hex)}} />
-            </div>
-          </div>
-          </div>
-          
-          <div id="modulationBox">
-            <h3>Modulation</h3>
-            <div className="selectBox">
-              <div id='modsize' className="selectOption leftEdge selected" onClick={modOpt}>Size</div>
-              <div id='modrotate' className="selectOption rightEdge" onClick={modOpt}>Rotation</div>
-            </div>
-            <p>Speed</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.speed[modPos]}} ></div>
-              <div className="sliderHandle" id='speed' style={{left: sliderPositions.speed[modPos]}} onMouseDown={startSlide}></div>
-            </div>
-            <p>Amplitude</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.amp[modPos]}} ></div>
-              <div className="sliderHandle" id='amp' style={{left: sliderPositions.amp[modPos]}} onMouseDown={startSlide}></div>
-            </div>
-          </div>
-
-          <div className='buttonRow'>
-            <div className="button norm" onClick={undo}>Undo</div>
-            <div className="button norm" onClick={redo}>Redo</div>
-            <div className="button norm" onClick={clearCanv}>Clear</div>
-            <div className="button norm" id='eraseButton' onClick={enableEraser}>Eraser</div>
-          </div>
-        </div>
-      </div>
-
-      <div id="middle">
-        <div id='mobButtonCol'>
-          <div className="button mob" onClick={undo}>Undo</div>
-          <div className="button mob" onClick={redo}>Redo</div>
-          <div className="button mob" onClick={clearCanv}>Clear</div>
-          <div className="button mob" id='mobEraseButton' onClick={enableEraser}>Eraser</div>
-        </div>
-        <canvas id='canv' onTouchStart={startStroke} onMouseDown={startStroke} width={3000} height={3000}></canvas>
-      </div>
       
+      <canvas id='canv' onTouchStart={startStroke} onMouseDown={startStroke} width={3000} height={3000}></canvas>
 
-      <div className="sideCont" style={{right: 0}}>
-        <div className="dialogBox">
-          <h3>Image</h3>
-          <div className="row" style={{height: 'fit-content', width: '100%'}}>
+      <div id="dialogs">
+        <div className="tab">
+          <div id='bgTab' className="tabOption leftest selected" onClick={clickOption}>Background</div>
+          <div id='imgTab' className="tabOption" onClick={clickOption}>Images</div>
+          <div id='modTab' className="tabOption" onClick={clickOption}>Modulation</div>
+        </div>
+
+        <div id="bgBox" className='dialogPage'>
+          <SketchPicker presetColors={[]} disableAlpha={true} color={bgGrad[gradPos]} width={'95%'} onChange={updatedColor => {updateCurrentBgNode(updatedColor.hex)}} />
+          <div className='rowBox'>
+            <div className="colBox">
+              <b>Gradient Stop</b>
+              <div className='row'>
+                <div className="button arrow" onClick={() => {setGradPos(p => {return p-1})}}> &lt;</div>
+                <span>{gradPos + 1}&nbsp;/&nbsp;{bgGrad.length}</span>
+                <div className="button arrow" onClick={() => {setGradPos(p => {return p+1})}}> &gt;</div>
+              </div>
+              <div className="button" onClick={addGradStop}><big>+ </big> Add Stop</div>
+            </div>
+
+            <div className="colBox">
+              <b>Gradient Position</b>
+              <div className="row">
+                <div className="colBox">
+                  <div className="row">
+                    <span>x0</span>
+                    <input type="number" id='x0' value={0 || gradAngle.x0} onChange={changeGradpoint}/>
+                  </div>
+                  <div className="row">
+                    <span>y0</span>
+                    <input type="number" id='y0' value={0 || gradAngle.y0} onChange={changeGradpoint}/>
+                  </div>
+                </div>
+                <div className="colBox">
+                  <div className="row">
+                    <span>x1</span>
+                    <input type="number" id='x1' value={0 || gradAngle.x1} onChange={changeGradpoint}/>
+                  </div>
+                  <div className="row">
+                    <span>y1</span>
+                    <input type="number" id='y1' value={0 || gradAngle.y1} onChange={changeGradpoint}/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="dialogPage hide" id="imgBox">
+          <div className="row">
             <input id='imageUpload' type="file" accept="image/jpeg, image/png, image/jpg" multiple={true}></input>
             <div id="imagePicker">
               <div className='row'>
@@ -486,106 +438,37 @@ function App() {
           <div id="imgPreview">
             {img.map((img, i) => {
               if (i !== imgPos) return;
-              return <img id='imgPreview' src={img.src} alt="" style={{transform: `rotate(${sliderPositions.rotate}grad) scale(${((sliderPositions.size*2)/$('.slider').width())})`}}/>
+              return <img id='imgPreview' src={img.src} alt="" style={{transform: `rotate(${sliderPositions.rotate[modPos]*4}grad) scale(${((sliderPositions.size[modPos]*2)/100)})`}}/>
             })}
           </div>
-          <br />
-          <div id="brushSliders">
+          <div className='sliders'>
             <p>Size</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.size}}></div>
-              <div className="sliderHandle" id='size' style={{left: sliderPositions.size}} onMouseDown={startSlide}></div>          
-            </div>
+            <input type="range" name="size" value={sliderPositions.size[modPos] || 0} onChange={sliderChanged}/>
             <p>Rotation</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.rotate}}></div>
-              <div className="sliderHandle" id='rotate' style={{left: sliderPositions.rotate}} onMouseDown={startSlide}></div>
-            </div>
+            <input type="range" name="rotate" value={sliderPositions.rotate[modPos] || 0} onChange={sliderChanged}/>
             <p>Density</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.density}}></div>
-              <div className="sliderHandle" id='density' style={{left: sliderPositions.density}} onMouseDown={startSlide}></div>
-            </div>
-          </div>
-          <br />
-        </div>  
-      </div>
-
-      <div id="mobileDialog" className='dialogBox'>
-        <div className="tab">
-          <div id='bgTab' className="tabOption leftest selected" onClick={clickOption}>Background</div>
-          <div id='imgTab' className="tabOption" onClick={clickOption}>Image</div>
-          <div id='modTab' className="tabOption" onClick={clickOption}>Modulation</div>
-        </div>
-
-        <div className="mobBg">
-          <div id="gradColourPicker">
-            <div className="colContainer">
-              <div className="buttonCol">
-                <span>x0</span>
-                <div id='x0' className="number" onTouchStart={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.x0)}</div>
-                <span>y0</span>
-                <div id='y0' className="number" onTouchStart={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.y0)}</div>
-                <span>x1</span>
-                <div id='x1' className="number" onTouchStart={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.x1)}</div>
-                <span>y1</span>
-                <div id='y1' className="number" onTouchStart={startDrag} onDoubleClick={changeNumber} onBlur={finishChange}>{Math.round(gradAngle.y1)}</div>
-                <span>Stop</span>
-                <div id='gradPos' className="number" onTouchStart={startDrag}>{gradPos}</div>
-                <div className="button" onClick={addGradStop}>+</div>
-              </div>
-              <SketchPicker presetColors={[]} disableAlpha={true} color={bgGrad[gradPos]} width={'60%'} onChange={updatedColor => {updateCurrentBgNode(updatedColor.hex)}} />
-            </div>
+            <input type="range" name="density" value={sliderPositions.density[modPos] || 0} onChange={sliderChanged}/>
           </div>
         </div>
 
-        <div className="mobImg hide">
-          <div className="row" style={{height: 'fit-content', width: '100%'}}>
-            <input id='mobImageUpload' type="file" accept="image/jpeg, image/png, image/jpg" multiple={true}></input>
-            <div id="imagePicker">
-              <div className='row'>
-                <div className="button arrow" onClick={() => imgChange(-1)}> &lt;</div>
-                <span>{imgPos + 1}&nbsp;/&nbsp;{img.length}</span>
-                <div className="button arrow" onClick={() => imgChange(1)}> &gt;</div>
-              </div>
-            </div>
+        <div className="dialogPage hide" id="modBox">
+          <div className="selectBox" onClick={modOpt}>
+            <div id='modsize' className="selectOption leftEdge selected">Size</div>
+            <div id='modrotate' className="selectOption rightEdge">Rotation</div>
           </div>
-          <div id="brushSliders">
-            <p>Size</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.size}}></div>
-              <div className="sliderHandle" id='size' style={{left: sliderPositions.size}} onTouchStart={startSlide}></div>          
-            </div>
-            <p>Rotation</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.rotate}}></div>
-              <div className="sliderHandle" id='rotate' style={{left: sliderPositions.rotate}} onTouchStart={startSlide}></div>
-            </div>
-            <p>Density</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.density}}></div>
-              <div className="sliderHandle" id='density' style={{left: sliderPositions.density}} onTouchStart={startSlide}></div>
-            </div>
-          </div>
+          <p>Speed</p>
+          <input type="range" name="speed" value={sliderPositions.speed[modPos] || 0} onChange={sliderChanged}/>
+          <p>Amplitude</p>
+          <input type="range" name="amp" value={sliderPositions.amp[modPos] || 0} onChange={sliderChanged} />
+
+          <canvas id="waveCanv"></canvas>
         </div>
-        <div className="mobMod hide">
-          <div id="modulationBox">
-            <h3>Modulation</h3>
-            <div className="selectBox">
-              <div id='modsize' className="selectOption leftEdge selected" onClick={modOpt}>Size</div>
-              <div id='modrotate' className="selectOption rightEdge" onClick={modOpt}>Rotation</div>
-            </div>
-            <p>Speed</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.speed[modPos]}} ></div>
-              <div className="sliderHandle" id='speed' style={{left: sliderPositions.speed[modPos]}} onTouchStart={startSlide}></div>
-            </div>
-            <p>Amplitude</p>
-            <div className="slider">
-              <div className="slideProgress" style={{width: sliderPositions.amp[modPos]}} ></div>
-              <div className="sliderHandle" id='amp' style={{left: sliderPositions.amp[modPos]}} onTouchStart={startSlide}></div>
-            </div>
-          </div>
+
+        <div className='row' id='mainButtons'>
+          <div className="button" id='eraseButton' onClick={enableEraser}>Eraser</div>
+          <div className="button" onClick={clearCanv}>Clear</div>
+          <div className="button" onClick={undo}>Undo</div>
+          <div className="button" onClick={redo}>Redo</div>
         </div>
       </div>
     </div>
