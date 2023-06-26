@@ -26,12 +26,13 @@
   height: 95vmin;
   aspect-ratio: 1;
   box-shadow: 0 0 10px #ccc;
+  touch-action: none;
 }
 
 #waveCanv {
   margin-top: 25px;
   width: 100%;
-  height: clamp(150px, 10vmin, 300px);
+  height: clamp(100px, 15vmin, 300px);
   border: 2px solid #ccc;
   border-radius: 10px;
 }
@@ -50,7 +51,7 @@
   position: relative;
   overflow: hidden;
   padding: 65px clamp(10px, 2vw, 20px);
-  width: min(60vmin, 30vmax)
+  width: min(60vmin, 30vmax);
 }
 
 #mainButtons {
@@ -143,7 +144,7 @@
 }
 
 .rowBox {
-  column-gap: min(50px, 5.5vw);
+  column-gap: min(50px, 5.5vw, 4vh);
   display: flex;
   flex-direction: row;
   width: calc(100% - 20px);
@@ -160,7 +161,7 @@
   margin-bottom: 10px;
   width: 100%;
   white-space: nowrap;
-  font-size: clamp(15px, 1.5vw, 20px);
+  font-size: clamp(15px, min(1.5vw, 2vh), 20px);
 }
 
 span {

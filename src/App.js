@@ -372,9 +372,9 @@ function App() {
   }
 
   return (
-    <div className="App" onMouseMove={moveDrag} onTouchMove={moveDrag} onMouseUp={endDrag} onTouchEnd={endDrag}>
+    <div className="App" onMouseUp={endDrag} onTouchEnd={endDrag}>
       
-      <canvas id='canv' onTouchStart={startStroke} onMouseDown={startStroke} width={3000} height={3000}></canvas>
+      <canvas id='canv' onTouchStart={startStroke} onMouseDown={startStroke} onMouseMove={moveDrag} onTouchMove={moveDrag} width={3000} height={3000}></canvas>
 
       <div id="dialogs">
         <div className="tab">
